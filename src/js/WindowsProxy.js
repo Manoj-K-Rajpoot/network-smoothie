@@ -1,88 +1,61 @@
-'use strict'
+'use strict';
 
-const regedit = require('regedit')
-const shell = require('node-powershell')
+const path = require('path');
+const { exec, execFile } = require('child_process');
 
 module.exports = class WindowsProxy {
+  constructor() {
+    this.host = '127.0.0.1';
+    this.port = '1080';
+    this.psScriptPath = path.join(__dirname, 'refresh-proxy.ps1');
+  }
 
-    constructor() {
-        this.host = 'localhost'
-        this.port = '1080'
-
-        // Powershell script to refresh windows proxy settings. 
-        // Here as a string because relative paths don't play well with `node-powershell` & electron packages.
-        this.refresh_ps = `
-                        $signature = '[DllImport("wininet.dll", SetLastError = true, CharSet=CharSet.Auto)]public static extern bool InternetSetOption(IntPtr hInternet, int dwOption, IntPtr lpBuffer, int dwBufferLength);'
-                        $INTERNET_OPTION_REFRESH            = 37
-                        $type = Add-Type -MemberDefinition $signature -Name wininet -Namespace pinvoke -PassThru
-                        $type::InternetSetOption(0, $INTERNET_OPTION_REFRESH, 0, 0)`
-    }
-
-    _refreshIE(callback=null) {
-        const ps = new shell({
-            executionPolicy: 'Bypass',
-            noProfile: true
-        })
-
-        ps.addCommand(this.refresh_ps);
-
-        ps.invoke()
-        .then(output => {
-            console.log(output)
-            ps.dispose()
-            if (callback)
-                callback()
-        })
-        .catch(err => {
-            console.log(err)
-            ps.dispose()
-            if (callback)
-                callback()
-        });
-    }
-
-    _formRegistryObj(proxyEnable, host=this.host, port=this.port) {
-        const registryKey = 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings'
-        const values = { [registryKey] : {
-                'ProxyEnable' : {
-                    value: proxyEnable,
-                    type: 'REG_DWORD'
-                },
-                'ProxyOverride': {
-                    value: '<local>',
-                    type: 'REG_SZ'
-                },
-                'ProxyServer' : {
-                    value: `socks=${host}:${port}`,
-                    type: 'REG_SZ'
-                }
-            }
+  _refreshWinINet(callback) {
+    execFile(
+      'powershell.exe',
+      ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', this.psScriptPath],
+      (err) => {
+        if (err) {
+          console.warn('WinINet refresh notice:', err.message);
         }
+        if (typeof callback === 'function') callback();
+      }
+    );
+  }
 
-        return values
-    }
-    
-    disableSocksProxy(callback=null) {
-        const ins = this
-        let values = this._formRegistryObj(0)
-    
-        regedit.putValue(values, function(err) {
-            if (err)
-                console.log(`Failed to disable proxy in registry`, err)
-        
-            ins._refreshIE(callback)
-        })
-    }
+  enableSocksProxy(callback) {
+    const regCmd = `reg add "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings" /v ProxyEnable /t REG_DWORD /d 1 /f && ` +
+      `reg add "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings" /v ProxyServer /t REG_SZ /d "socks=${this.host}:${this.port}" /f && ` +
+      `reg add "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings" /v ProxyOverride /t REG_SZ /d "<local>" /f`;
 
-    enableSocksProxy() {
-        const ins = this
-        let values = this._formRegistryObj(1)
+    exec(regCmd, (err) => {
+      if (err) {
+        console.error('Failed to enable proxy via reg:', err);
+      }
+      this._refreshWinINet(callback);
+    });
+  }
 
-        regedit.putValue(values, function(err) {
-            if (err)
-                console.log(`Failed to enable proxy in registry`, err)
-            
-            ins._refreshIE()
-        })
-    }
-}
+  disableSocksProxy(callback) {
+    const regCmd = `reg add "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings" /v ProxyEnable /t REG_DWORD /d 0 /f`;
+
+    exec(regCmd, (err) => {
+      if (err) {
+        console.error('Failed to disable proxy via reg:', err);
+      }
+      this._refreshWinINet(callback);
+    });
+  }
+
+  getProxyStatus(callback) {
+    const queryCmd = `reg query "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings" /v ProxyEnable`;
+    exec(queryCmd, (err, stdout) => {
+      if (err || !stdout) {
+        if (typeof callback === 'function') callback(false);
+        return;
+      }
+      const isEnabled = stdout.includes('0x1');
+      if (typeof callback === 'function') callback(isEnabled);
+    });
+  }
+};

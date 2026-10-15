@@ -1,60 +1,321 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <!-- Stylesheets -->
-    <link rel="stylesheet" href="./node_modules/xel/themes/material.css">
-    <link rel="stylesheet" href="./src/css/style.css">
-
-    <title>ISP Smoothie</title>
-
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smoothie - Network Bonding Engine</title>
+  <link rel="stylesheet" href="./src/css/style.css">
 </head>
+<body>
+  <div class="app-container">
+    <!-- Custom Draggable Frameless Titlebar -->
+    <header class="titlebar" id="title-bar">
+      <div class="titlebar-brand">
+        <svg class="titlebar-logo" viewBox="0 0 24 24" fill="none" stroke="#00f2fe" stroke-width="2">
+          <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+          <circle cx="12" cy="12" r="4" stroke="#ff007f" fill="rgba(0, 242, 254, 0.2)"/>
+        </svg>
+        <span class="titlebar-title">Smoothie</span>
+        <span class="titlebar-badge" id="title-status-badge">Standby</span>
+      </div>
 
-<body class='window'>
+      <div class="titlebar-controls">
+        <button class="window-btn" id="btn-minimize" title="Minimize">
+          <svg width="10" height="10" viewBox="0 0 10 10"><path fill="currentColor" d="M0 5h10v1H0z"/></svg>
+        </button>
+        <button class="window-btn" id="btn-maximize" title="Maximize">
+          <svg width="10" height="10" viewBox="0 0 10 10"><path stroke="currentColor" fill="none" d="M1.5 1.5h7v7h-7z"/></svg>
+        </button>
+        <button class="window-btn btn-close" id="btn-close" title="Close">
+          <svg width="10" height="10" viewBox="0 0 10 10"><path fill="currentColor" d="M1 0L0 1l4 4-4 4 1 1 4-4 4 4 1-1-4-4 4-4-1-1-4 4z"/></svg>
+        </button>
+      </div>
+    </header>
 
-    <div id="title-bar"></div>
+    <!-- Main Dashboard Body -->
+    <main class="dashboard-content">
+      
+      <!-- Left Hero Sidebar: Power & Settings (Fixed Width 340px) -->
+      <aside class="hero-panel">
+        
+        <!-- Speedify Power Switch -->
+        <div class="power-section" id="power-section">
+          <div class="power-btn-container">
+            <div class="power-ring-glow"></div>
+            <div class="power-ring"></div>
+            <button class="power-btn" id="main-power-btn" title="Toggle Channel Bonding">
+              <svg class="power-icon" viewBox="0 0 24 24">
+                <path d="M18.36 6.64a9 9 0 1 1-12.73 0"/>
+                <line x1="12" y1="2" x2="12" y2="12"/>
+              </svg>
+              <span class="power-label" id="power-btn-label">START</span>
+            </button>
+          </div>
 
-    <div class="header">
-        <h1>Smoothie<span style="font-size: 14px; color:lightsalmon;">(alpha)</span></h1>
-    </div>
+          <div class="status-info">
+            <div class="status-badge" id="status-badge">
+              <span class="dot"></span>
+              <span id="status-badge-text">DISCONNECTED</span>
+            </div>
+            <p class="status-caption" id="status-caption">Combine multiple connections for boosted speed</p>
+          </div>
+        </div>
 
-    <x-box vertical class='items'>
-        <x-card id="main-card">
-            <header>
-                <h3 style="text-align: left;">Blender</h3>
-                <x-label style="padding-right: 5px";><strong id='label-enable-service'>off</strong></x-label>
-                <x-switch id="enable-service" onchange="mainToggle" skin="big"></x-switch>
-            </header>
-            
-                <main id='networks'>
-                </main>
-            </x-card>
-    </x-box>
+        <!-- Bonding Modes -->
+        <div class="mode-selector">
+          <button class="mode-btn active" data-mode="speed" id="mode-speed" title="Aggregates all internet connections for maximum speed">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            <span>Speed</span>
+          </button>
+          <button class="mode-btn" data-mode="streaming" id="mode-streaming" title="Prioritizes smooth streaming, gaming, and low jitter">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            <span>Streaming</span>
+          </button>
+          <button class="mode-btn" data-mode="redundant" id="mode-redundant" title="Ultra reliability with multi-path failover">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            <span>Redundant</span>
+          </button>
+        </div>
 
-    <dialog id='update-dialog'>
-        <main>
-            <h4>Update Available!</h4>
-            <p>Install now?</p>
-        </main>
-    
-        <footer>
-        <x-button id="disagree-update-button">
-            <x-label>Disagree</x-label>
-        </x-button>
-        <x-button toggled id="agree-update-button">
-            <x-label>Agree</x-label>
-        </x-button>
-        </footer>
+        <!-- Connection Latency & Health Strip -->
+        <div class="health-strip">
+          <div class="health-item">
+            <span class="health-label">Ping / Latency</span>
+            <span class="health-value excellent" id="latency-display">-- ms</span>
+          </div>
+          <div class="health-item">
+            <span class="health-label">Bond Health</span>
+            <span class="health-value" id="health-display">Optimal</span>
+          </div>
+        </div>
+
+        <!-- System Proxy Auto-Route Switch -->
+        <div class="proxy-card">
+          <div class="proxy-info">
+            <span class="proxy-title">System Proxy Routing</span>
+            <span class="proxy-subtitle">Route all Windows apps through bond</span>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="system-proxy-toggle" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <!-- Quick Action Buttons -->
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <button class="btn-primary" style="width: 100%; justify-content: center; height: 38px; display: flex; align-items: center; gap: 8px;" id="btn-test-bond" title="Launch parallel test streams across all adapters to benchmark combined throughput">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            <span>Run Multi-Bond Test</span>
+          </button>
+          <div style="display: flex; gap: 8px;">
+            <button class="btn-secondary" style="flex: 1; justify-content: center;" id="btn-test-ping">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+              Ping
+            </button>
+            <button class="btn-secondary" style="flex: 1; justify-content: center;" id="btn-refresh-adapters">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+              Rescan
+            </button>
+          </div>
+        </div>
+
+      </aside>
+
+      <!-- Right Main Panel: Live Telemetry, Graph & Adapters -->
+      <section class="main-panel">
+        
+        <!-- Live Metrics Grid with Fixed Sizes -->
+        <div class="stats-grid">
+          <!-- Download Speed (with Mbps + MB/s) -->
+          <div class="stat-card download">
+            <div class="stat-header">
+              <span class="stat-title">Combined Download</span>
+              <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            </div>
+            <div class="stat-value">
+              <span class="stat-num" id="metric-download-mbps">0.00</span>
+              <span class="stat-unit">Mbps</span>
+            </div>
+            <div class="stat-subtext" id="metric-download-bytes">0.00 MB/s</div>
+          </div>
+
+          <!-- Upload Speed -->
+          <div class="stat-card upload">
+            <div class="stat-header">
+              <span class="stat-title">Combined Upload</span>
+              <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            </div>
+            <div class="stat-value">
+              <span class="stat-num" id="metric-upload-mbps">0.00</span>
+              <span class="stat-unit">Mbps</span>
+            </div>
+            <div class="stat-subtext" id="metric-upload-bytes">0.00 MB/s</div>
+          </div>
+
+          <!-- Total Session Data -->
+          <div class="stat-card session">
+            <div class="stat-header">
+              <span class="stat-title">Blended Data</span>
+              <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke-width="2.2"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>
+            </div>
+            <div class="stat-value">
+              <span class="stat-num" id="metric-session-data">0.00</span>
+              <span class="stat-unit" id="metric-session-unit">MB</span>
+            </div>
+            <div class="stat-subtext">Total Session Traffic</div>
+          </div>
+
+          <!-- Active Sockets / Streams -->
+          <div class="stat-card sockets">
+            <div class="stat-header">
+              <span class="stat-title">Active Streams</span>
+              <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke-width="2.2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            </div>
+            <div class="stat-value">
+              <span class="stat-num" id="metric-active-sockets">0</span>
+              <span class="stat-unit">Streams</span>
+            </div>
+            <div class="stat-subtext">Balanced Connections</div>
+          </div>
+        </div>
+
+        <!-- Real-Time Bandwidth Sparkline Graph with Multi-Adapter Mbps Breakdown -->
+        <div class="graph-container">
+          <div class="graph-header">
+            <div class="graph-title-group">
+              <span class="graph-title">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                Live Bandwidth Timeline
+              </span>
+              <span class="combined-mbps-pill" id="combined-mbps-pill">Combined: 0.00 Mbps</span>
+            </div>
+            <!-- Per-adapter live Mbps chip indicators -->
+            <div class="graph-legend" id="graph-adapter-legends">
+              <!-- Dynamically rendered per-adapter chips -->
+            </div>
+          </div>
+          <canvas id="bandwidth-canvas"></canvas>
+        </div>
+
+        <!-- Built-in Turbo Downloader (Multi-Network Accelerated Connection Pool) -->
+        <div class="turbo-card">
+          <div class="turbo-header">
+            <div class="turbo-title-group">
+              <span class="turbo-title">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00f2fe" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                Turbo Multi-Network Downloader
+              </span>
+              <span class="turbo-chip">Bonded Pool</span>
+            </div>
+            <span class="turbo-subtitle">Slices files into parallel streams across all active networks</span>
+          </div>
+
+          <div class="turbo-input-row">
+            <div class="turbo-input-wrapper">
+              <input type="text" id="turbo-url-input" class="turbo-input" placeholder="Paste direct file download link (e.g. https://.../file.zip)">
+              <button class="btn-input-action" id="btn-turbo-paste" title="Paste from clipboard">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>
+                Paste
+              </button>
+            </div>
+            <button class="btn-primary turbo-btn" id="btn-turbo-start">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              <span>Turbo Download</span>
+            </button>
+          </div>
+
+          <!-- Quick Samples -->
+          <div class="turbo-presets">
+            <span class="preset-label">Quick Test Demos:</span>
+            <button class="preset-btn" data-url="https://proof.ovh.net/files/10Mb.dat">10 MB Sample</button>
+            <button class="preset-btn" data-url="https://proof.ovh.net/files/100Mb.dat">100 MB Sample</button>
+            <button class="preset-btn" data-url="https://speed.hetzner.de/100MB.bin">Hetzner 100 MB</button>
+          </div>
+
+          <!-- Active Download Box -->
+          <div class="turbo-progress-box" id="turbo-progress-box" style="display: none;">
+            <div class="turbo-status-header">
+              <div class="turbo-file-info">
+                <span class="turbo-file-name" id="turbo-file-name">file.zip</span>
+                <span class="turbo-file-meta" id="turbo-file-meta">0.00 / 0.00 MB (0%)</span>
+              </div>
+              <div class="turbo-metrics-badge">
+                <span class="turbo-speed" id="turbo-speed">0.00 Mbps</span>
+                <span class="turbo-eta" id="turbo-eta">ETA: --</span>
+              </div>
+            </div>
+
+            <!-- Main Progress Bar -->
+            <div class="turbo-bar-container">
+              <div class="turbo-bar-fill" id="turbo-bar-fill" style="width: 0%;"></div>
+            </div>
+
+            <!-- Per-Adapter Active Streaming Lanes -->
+            <div class="turbo-lanes-title">Active Network Adapter Slices:</div>
+            <div class="turbo-lanes-container" id="turbo-lanes-container">
+              <!-- Dynamically populated lanes -->
+            </div>
+
+            <div class="turbo-footer-actions">
+              <button class="btn-secondary" id="btn-turbo-cancel">Cancel</button>
+              <button class="btn-primary" id="btn-turbo-open" style="display: none;">📂 Open in Downloads</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Network Adapters List Section -->
+        <div class="section-header">
+          <div class="section-title">
+            <span>Available Network Adapters</span>
+            <span class="badge-count" id="adapters-count-badge">0 Active</span>
+          </div>
+        </div>
+
+        <!-- Container for adapter cards -->
+        <div class="adapters-list" id="adapters-container">
+          <!-- Populated by ui-controller.js -->
+        </div>
+
+      </section>
+
+    </main>
+
+    <!-- App Bottom Footer Bar -->
+    <footer class="footer-bar">
+      <div class="footer-socks-info">
+        <span>Local SOCKS5 Proxy:</span>
+        <span class="socks-pill" id="socks-info-pill">127.0.0.1:1080</span>
+        <button class="btn-copy-ip" id="btn-copy-proxy" title="Copy SOCKS5 address">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        </button>
+      </div>
+      <div>
+        <span>Smoothie Bonding Engine v0.2.0 • Ultra Low Overhead</span>
+      </div>
+    </footer>
+
+    <!-- Update Dialog Modal -->
+    <dialog class="custom-modal" id="update-dialog">
+      <h4 class="modal-header">Update Ready to Install</h4>
+      <p class="modal-body">A new version of Smoothie has been downloaded in the background. Would you like to restart and apply it now?</p>
+      <div class="modal-footer">
+        <button class="btn-secondary" id="disagree-update-button">Later</button>
+        <button class="btn-primary" id="agree-update-button">Restart & Update</button>
+      </div>
     </dialog>
 
+    <!-- Quick Toast Notification -->
+    <div class="toast" id="app-toast">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00f2fe" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      <span id="toast-message">Notification</span>
+    </div>
 
-    <!-- JS -->
-    <script src="./node_modules/xel/xel.min.js"></script>
-    <script>
-        require('./src/js/title-bar.js')
-        require('./src/js/ui-controller.js')
-    </script>
+  </div>
+
+  <!-- Scripts -->
+  <script>
+    require('./src/js/title-bar.js');
+    require('./src/js/ui-controller.js');
+  </script>
 </body>
-
 </html>

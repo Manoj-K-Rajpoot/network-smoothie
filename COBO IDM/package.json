@@ -1,0 +1,21 @@
+{
+  "name": "cobo-idm",
+  "version": "1.0.0",
+  "description": "Combined-Bandwidth Internet Download Manager with Multi-Network Channel Bonding",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron .",
+    "start:local": "..\\node_modules\\.bin\\electron ."
+  },
+  "keywords": [
+    "download-manager",
+    "idm",
+    "network-bonding",
+    "bandwidth-aggregation",
+    "multi-homing",
+    "electron"
+  ],
+  "author": "COBO IDM Team",
+  "license": "MIT"
+}

@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>COBO IDM — Combined Bandwidth Download Manager</title>
+  <link rel="stylesheet" href="./css/cobo.css">
+</head>
+<body>
+  <div class="cobo-window">
+    
+    <!-- Custom Draggable Titlebar -->
+    <header class="cobo-titlebar">
+      <div class="titlebar-brand">
+        <svg class="titlebar-logo" viewBox="0 0 24 24" fill="none" stroke="#00f2fe" stroke-width="2.5">
+          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+        </svg>
+        <span class="titlebar-title">COBO IDM</span>
+        <span class="titlebar-chip">Channel Bonded</span>
+      </div>
+
+      <div class="titlebar-controls">
+        <button class="btn-win" id="btn-min" title="Minimize">
+          <svg width="10" height="10" viewBox="0 0 10 10"><path fill="currentColor" d="M0 5h10v1H0z"/></svg>
+        </button>
+        <button class="btn-win" id="btn-max" title="Maximize">
+          <svg width="10" height="10" viewBox="0 0 10 10"><path stroke="currentColor" fill="none" d="M1.5 1.5h7v7h-7z"/></svg>
+        </button>
+        <button class="btn-win close" id="btn-close" title="Close">
+          <svg width="10" height="10" viewBox="0 0 10 10"><path fill="currentColor" d="M1 0L0 1l4 4-4 4 1 1 4-4 4 4 1-1-4-4 4-4-1-1-4 4z"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Top Action Toolbar -->
+    <div class="cobo-toolbar">
+      <div class="toolbar-actions">
+        <button class="btn-tool primary" id="btn-add-download">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Add Download
+        </button>
+        <button class="btn-tool" id="btn-resume-all">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          Resume All
+        </button>
+        <button class="btn-tool" id="btn-pause-all">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+          Pause All
+        </button>
+        <button class="btn-tool" id="btn-clear-completed">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          Clear Finished
+        </button>
+      </div>
+
+      <div class="toolbar-actions">
+        <button class="btn-tool" id="btn-network-settings">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          Adapters Pool
+        </button>
+      </div>
+    </div>
+
+    <!-- App Body: Sidebar + Main Queue -->
+    <div class="cobo-body">
+      
+      <!-- Category Sidebar -->
+      <aside class="cobo-sidebar">
+        <span class="category-title">Status</span>
+        <ul class="category-list">
+          <li class="category-item active" data-filter="all">
+            <span>All Downloads</span>
+            <span class="count" id="count-all">0</span>
+          </li>
+          <li class="category-item" data-filter="downloading">
+            <span>Downloading</span>
+            <span class="count" id="count-downloading">0</span>
+          </li>
+          <li class="category-item" data-filter="completed">
+            <span>Completed</span>
+            <span class="count" id="count-completed">0</span>
+          </li>
+        </ul>
+
+        <span class="category-title" style="margin-top: 10px;">Categories</span>
+        <ul class="category-list">
+          <li class="category-item" data-filter="Compressed">
+            <span>Compressed</span>
+            <span class="count" id="count-compressed">0</span>
+          </li>
+          <li class="category-item" data-filter="Video">
+            <span>Video</span>
+            <span class="count" id="count-video">0</span>
+          </li>
+          <li class="category-item" data-filter="Audio">
+            <span>Audio</span>
+            <span class="count" id="count-audio">0</span>
+          </li>
+          <li class="category-item" data-filter="Program">
+            <span>Programs</span>
+            <span class="count" id="count-program">0</span>
+          </li>
+          <li class="category-item" data-filter="Document">
+            <span>Documents</span>
+            <span class="count" id="count-document">0</span>
+          </li>
+        </ul>
+      </aside>
+
+      <!-- Main Queue Display -->
+      <main class="cobo-main">
+        <div class="task-list-container" id="tasks-container">
+          <!-- Populated by controller.js -->
+        </div>
+      </main>
+
+    </div>
+
+    <!-- Bottom Telemetry Bar -->
+    <footer class="cobo-footer">
+      <div class="footer-speeds" id="footer-adapters-strip">
+        <!-- Live Per-Adapter contribution chips -->
+      </div>
+      <div class="footer-speeds">
+        <div class="footer-chip" style="background: rgba(0, 242, 254, 0.12); border-color: rgba(0, 242, 254, 0.3);">
+          <span class="dot" style="background: #00f2fe; box-shadow: 0 0 6px #00f2fe;"></span>
+          <span style="color: #00f2fe; font-weight: 700;">Combined:</span>
+          <span id="footer-total-speed">0.00 Mbps</span>
+        </div>
+      </div>
+    </footer>
+
+    <!-- Mature IDM Download Configuration Dialog -->
+    <div class="modal-overlay" id="add-modal">
+      <div class="modal-card idm-modal">
+        <div class="modal-header">
+          <div class="modal-header-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00f2fe" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            <span>Download File Info</span>
+          </div>
+          <button class="btn-icon-action" id="btn-modal-close" title="Close">
+            <svg width="10" height="10" viewBox="0 0 10 10"><path fill="currentColor" d="M1 0L0 1l4 4-4 4 1 1 4-4 4 4 1-1-4-4 4-4-1-1-4 4z"/></svg>
+          </button>
+        </div>
+
+        <div class="modal-body-scroll">
+          <!-- Address (URL) & Quick Actions -->
+          <div class="cfg-group">
+            <label class="cfg-label">Address (URL)</label>
+            <div class="input-with-action">
+              <input type="text" class="modal-input" id="modal-url-input" placeholder="Paste direct download URL (HTTP/HTTPS)..." autocomplete="off" spellcheck="false">
+              <button type="button" class="btn-tool" id="btn-paste-url" title="Paste from clipboard">Paste</button>
+            </div>
+            
+            <div class="sample-links-bar">
+              <span class="sample-hint">Quick test:</span>
+              <button type="button" class="sample-chip" id="modal-sample-10mb">10 MB (OVH)</button>
+              <button type="button" class="sample-chip" id="modal-sample-100mb">100 MB (OVH)</button>
+              <button type="button" class="sample-chip" id="modal-sample-ubuntu">Ubuntu Cloud Image</button>
+            </div>
+
+            <!-- Live URL Probe Feedback Card -->
+            <div class="probe-card" id="probe-card" style="display: none;">
+              <div class="probe-spinner" id="probe-spinner"></div>
+              <div class="probe-info" id="probe-info">
+                <span class="probe-status" id="probe-status-text">Probing remote server...</span>
+                <div class="probe-meta-badges" id="probe-meta-badges" style="display: none;">
+                  <span class="badge size" id="probe-badge-size">-</span>
+                  <span class="badge resume" id="probe-badge-resume">-</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- File Name & Category -->
+          <div class="cfg-row-two">
+            <div class="cfg-group flex-2">
+              <label class="cfg-label">File Name</label>
+              <input type="text" class="modal-input" id="modal-filename-input" placeholder="filename.ext" spellcheck="false">
+            </div>
+            <div class="cfg-group flex-1">
+              <label class="cfg-label">Category</label>
+              <select class="modal-select" id="modal-category-select">
+                <option value="Compressed">Compressed</option>
+                <option value="Video">Video</option>
+                <option value="Audio">Audio</option>
+                <option value="Program">Program</option>
+                <option value="Document">Document</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Save Location with Native Browse Button -->
+          <div class="cfg-group">
+            <label class="cfg-label">Save To (Destination Directory)</label>
+            <div class="input-with-action">
+              <input type="text" class="modal-input" id="modal-savedir-input" placeholder="Downloads directory..." readonly>
+              <button type="button" class="btn-tool" id="btn-browse-folder" title="Browse for folder">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                Browse...
+              </button>
+            </div>
+          </div>
+
+          <!-- Network Channel Bonding & Parallel Streams -->
+          <div class="cfg-section-title">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00f2fe" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            <span>Network Channel Bonding & Acceleration</span>
+          </div>
+
+          <div class="cfg-group">
+            <div class="slider-header">
+              <label class="cfg-label">Parallel Download Streams</label>
+              <span class="slider-val" id="val-connections">8 Streams</span>
+            </div>
+            <div class="stream-selector-row">
+              <button type="button" class="stream-btn" data-val="2">2</button>
+              <button type="button" class="stream-btn" data-val="4">4</button>
+              <button type="button" class="stream-btn active" data-val="8">8</button>
+              <button type="button" class="stream-btn" data-val="16">16</button>
+              <button type="button" class="stream-btn" data-val="24">24</button>
+              <button type="button" class="stream-btn" data-val="32">32</button>
+            </div>
+          </div>
+
+          <div class="cfg-group">
+            <label class="cfg-label">Bonded Hardware Interfaces</label>
+            <div class="adapter-checkbox-list" id="modal-adapters-list">
+              <!-- Dynamically populated by detected network hardware -->
+            </div>
+          </div>
+
+          <!-- Advanced Collapsible Settings: Headers, Cookies, Speed Limit -->
+          <div class="advanced-toggle" id="advanced-toggle">
+            <svg class="chevron" id="advanced-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+            <span>Advanced Options (Referer, Cookies, User-Agent, Speed Limiter)</span>
+          </div>
+
+          <div class="advanced-panel" id="advanced-panel" style="display: none;">
+            <div class="cfg-group">
+              <label class="cfg-label">Referrer URL (Referer:)</label>
+              <input type="text" class="modal-input small" id="modal-referer-input" placeholder="e.g. https://example.com/download-page" spellcheck="false">
+            </div>
+
+            <div class="cfg-group">
+              <label class="cfg-label">Custom Cookies (Cookie:)</label>
+              <input type="text" class="modal-input small" id="modal-cookie-input" placeholder="e.g. session_id=xyz; auth_token=abc" spellcheck="false">
+            </div>
+
+            <div class="cfg-row-two">
+              <div class="cfg-group flex-1">
+                <label class="cfg-label">User-Agent Preset</label>
+                <select class="modal-select" id="modal-useragent-select">
+                  <option value="default">COBO IDM Default</option>
+                  <option value="chrome">Google Chrome (Windows 11)</option>
+                  <option value="firefox">Mozilla Firefox</option>
+                  <option value="edge">Microsoft Edge</option>
+                  <option value="custom">Custom User-Agent</option>
+                </select>
+              </div>
+              <div class="cfg-group flex-1">
+                <label class="cfg-label">Speed Limiter</label>
+                <select class="modal-select" id="modal-speedlimit-select">
+                  <option value="0">Unlimited (Max Speed)</option>
+                  <option value="1024">1.0 MB/s</option>
+                  <option value="2048">2.0 MB/s</option>
+                  <option value="5120">5.0 MB/s</option>
+                  <option value="10240">10.0 MB/s</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="cfg-group" id="group-custom-useragent" style="display: none;">
+              <label class="cfg-label">Custom User-Agent String</label>
+              <input type="text" class="modal-input small" id="modal-useragent-custom" placeholder="Mozilla/5.0 ...">
+            </div>
+          </div>
+        </div>
+
+        <!-- Dialog Footer Actions -->
+        <div class="modal-actions-bar">
+          <button type="button" class="btn-tool" id="btn-modal-cancel">Cancel</button>
+          <div style="display: flex; gap: 8px;">
+            <button type="button" class="btn-tool" id="btn-modal-queue" title="Add to list without downloading immediately">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+              Add to Queue
+            </button>
+            <button type="button" class="btn-tool primary" id="btn-modal-start">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+              Start Download
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>require('./js/controller.js');</script>
+</body>
+</html>

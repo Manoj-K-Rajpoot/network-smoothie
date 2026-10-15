@@ -1,27 +1,27 @@
-'use strict'
+'use strict';
 
-var remote = require('electron').remote
-const Windowbar = require('../../lib/windowbar/src/index')
+const { ipcRenderer } = require('electron');
 
-var mainWindow = remote.getCurrentWindow()
+document.addEventListener('DOMContentLoaded', () => {
+  const minBtn = document.getElementById('btn-minimize');
+  const maxBtn = document.getElementById('btn-maximize');
+  const closeBtn = document.getElementById('btn-close');
 
-const isMac = process.platform === 'darwin'
-const style = isMac ? 'mac' : 'windows';
+  if (minBtn) {
+    minBtn.addEventListener('click', () => {
+      ipcRenderer.send('window-minimize');
+    });
+  }
 
-var t = new Windowbar({'style':'style', 'dark':true, 'dragable':true, 'dblClickable':true})
+  if (maxBtn) {
+    maxBtn.addEventListener('click', () => {
+      ipcRenderer.send('window-maximize');
+    });
+  }
 
-t.appendTo(document.getElementById('title-bar'))
-
-t.on('minimize', function(e) {
-	mainWindow.minimize()
+  if (closeBtn) {
+    closeBtn.addEventListener('click', () => {
+      ipcRenderer.send('window-close');
+    });
+  }
 });
-
-t.on('close', function(e) {
-	mainWindow.close()
-});
-
-// t.element exposes the root dom element
-t.element.appendChild(document.createElement('div'))
-
-// Clean up after usage
-t.destroy()

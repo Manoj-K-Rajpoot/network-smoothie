@@ -26,22 +26,26 @@ let mainWindow = null
 
 function createWindow () {
   
-  // Create the browser window.
+  // Create modern dashboard window
   mainWindow = new BrowserWindow({
-    backgroundColor: '#2f3241',
-    width: 350, 
-    height: 600,
-    resizable: isDev,
-    frame: isMac,
+    backgroundColor: '#0a0d16',
+    width: 920, 
+    height: 680,
+    minWidth: 800,
+    minHeight: 580,
+    resizable: true,
+    frame: false,
     show: false,
     webPreferences: {
-      nodeIntegration: true
+      nodeIntegration: true,
+      contextIsolation: false,
+      enableRemoteModule: true
     }
   })
 
   if (isDev) {
     // Open the DevTools.
-    mainWindow.webContents.openDevTools()
+    mainWindow.webContents.openDevTools({ mode: 'detach' })
     require('electron-reload')(__dirname, {
       electron: path.join(__dirname, 'node_modules', '.bin', 'electron')
     })
@@ -64,13 +68,28 @@ function createWindow () {
 
   // Emitted when the window is closed.
   mainWindow.on('closed', function () {
-    // Dereference the window object, usually you would store windows
-    // in an array if your app supports multi windows, this is the time
-    // when you should delete the corresponding element.
     mainWindow = null    
   })
 
 }
+
+// Window control IPC handlers
+ipcMain.on('window-minimize', () => {
+  if (mainWindow) mainWindow.minimize();
+});
+
+ipcMain.on('window-maximize', () => {
+  if (!mainWindow) return;
+  if (mainWindow.isMaximized()) {
+    mainWindow.unmaximize();
+  } else {
+    mainWindow.maximize();
+  }
+});
+
+ipcMain.on('window-close', () => {
+  if (mainWindow) mainWindow.close();
+});
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
@@ -83,6 +102,12 @@ app.on('window-all-closed', function () {
   // to stay active until the user quits explicitly with Cmd + Q
   if (!isMac) {
     windows.disableSocksProxy(() => app.quit())
+  }
+})
+
+app.on('before-quit', function () {
+  if (!isMac) {
+    windows.disableSocksProxy()
   }
 })
 
